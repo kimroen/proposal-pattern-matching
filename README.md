@@ -419,54 +419,81 @@ PrimaryExpression :
 MatchExpression :
   // Note: this requires a cover grammar to handle ambiguity
   // between a call to a match function and the match expr.
-  `match` [no |LineTerminator| here] `(` Expression `)` [no |LineTerminator| here] `{` MatchExpressionClauses `}`
+  `match` [no |LineTerminator| here] `(` Expression `)` [no |LineTerminator| here] `{` MatchClauses `}`
 
-MatchExpressionClauses :
-  MatchExpressionClause
-  MatchExpressionsClauses `,` MatchExpressionsClause [`,`]
+MatchClauses :
+  MatchClause
+  MatchClauses `,` MatchClause
+  MatchClauses `,` MatchClause [`,`]
 
-MatchExpressionClause :
-  MatchExpressionClauseLHS [MatchGuardExpression] `=>` ArrowBody
+MatchClause :
+  MatchPattern [MatchGuard] `=>` ConciseBody
 
-MatchExpressionClauseLHS :
-  [MatchExtractorExpresson] MatchExpressionPattern
+MatchBindingPattern :
+  MatchBinding
+  MatchExtractorReference MatchBinding
 
-MatchGuardExpression :
+MatchExtractorReference :
+  // TODO - this is no good. Here be dragons.
+  LeftHandSideExpression
+
+MatchGuard :
   `if` [no |LineTerminator| here] `(` Expression `)`
 
-MatchExpressionPattern :
-  ObjectMatchPattern
-  ArrayMatchPattern
-  IdentifierMatchPattern
-  LiteralMatchPattern
+MatchBinding :
+  ObjectMatchBinding
+  ArrayMatchBinding
+  IdentifierMatchBinding
+  LiteralMatchBinding
 
-ObjectMatchPattern :
-  `{` ObjectMatchKeyVal [`,`, ObjectMatchKeyVal ]* `}`
+ObjectMatchBinding :
+  `{` `}`
+  `{` MatchPropertyList `}`
+  `{` MatchPropertyList `,` `}`
 
-ObjectMatchKeyVal :
-  Variable
-  ObjectKey `:` MatchExressionClauseLHS
+MatchPropertyList :
+  MatchProperty
+  MatchPropertyList `,` MatchProperty
+
+MatchProperty
+  SingleNameBinding
+  PropertyName `:` MatchBindingPattern
   // Unlike Arrays, object destructuring can _only_ be a variable.
-  `...` Variable
+  `...` IdentifierMatchBinding
 
-ArrayMatchPattern :
-  `[` ArrayMatchPatternElement [`,`, ArrayMatchPatternElement]* `]`
+ArrayMatchBinding :
+  `[` `]`
+  `[` MatchRestElement `]`
+  `[` Elision MatchRestElement `]`
+  `[` MatchElementList `]`
+  `[` MatchElementList `,`, `]`
+  `[` MatchElementList `,`, Elision `]`
+  `[` MatchElementList `,`, Elision MatchRestElement `]`
 
-ArrayMatchPatternElement :
-  MatchExpressionClauseLHS
-  // NOTE: I'm not sure what-all array destructuring is actually -able- to
-  //       destructure here.
-  `...` MatchExpressionClauseLHS
+MatchElementList :
+  MatchElisionElement
+  MatchElementList `,` MatchElisionElement
 
-IdentifierMatchPattern :
-  Variable
+MatchElisionElement :
+  MatchElement
+  Elision MatchElement
 
-LiteralMatchPattern :
-  LiteralNumber
-  LiteralString
-  LiteralBoolean
-  LiteralNull
-  LiteralRegExp
+MatchElement :
+  MatchBindingPattern
+
+MatchRestElement :
+  `...` IdentifierMatchBinding
+  `...` MatchBindingPattern
+
+IdentifierMatchBinding :
+  BindingIdentifier
+
+LiteralMatchBinding :
+  NullLiteral
+  BooleanLiteral
+  NumericLiteral
+  StringLiteral
+  RegularExpressionLiteral
 ```
 
 #### <a name="no-fallthrough"></a> > No Clause Fallthrough
